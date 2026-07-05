@@ -1,0 +1,11 @@
+{
+  "inputDir": "/root/rpum/pack",
+  "destination": "/var/www/rpu",
+  "publicBaseUrl": "https://rpu.mzdyhr.cn/rpu",
+  "sourceName": "Main",
+  "localPackName": "SyncedPack",
+  "writeClientConfig": true,
+  "serverLock": "mzdyhrrputkszbx-1425",
+  "encrypt": false,
+  "clean": true
+}

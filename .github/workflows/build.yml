@@ -1,0 +1,95 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }}-${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+            goos: linux
+            goarch: amd64
+            ext: ''
+          - os: ubuntu-latest
+            arch: arm64
+            goos: linux
+            goarch: arm64
+            ext: ''
+          - os: windows-latest
+            arch: amd64
+            goos: windows
+            goarch: amd64
+            ext: '.exe'
+          - os: windows-latest
+            arch: arm64
+            goos: windows
+            goarch: arm64
+            ext: '.exe'
+          - os: macos-latest
+            arch: amd64
+            goos: darwin
+            goarch: amd64
+            ext: ''
+          - os: macos-latest
+            arch: arm64
+            goos: darwin
+            goarch: arm64
+            ext: ''
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -o "rpu-publisher-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpu-publisher-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: rpu-publisher-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+
+  release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          for dir in */; do
+            mv "${dir}"/* .
+            rmdir "${dir}"
+          done
+          sha256sum rpu-publisher-* > SHA256SUMS
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/rpu-publisher-*
+            artifacts/SHA256SUMS
+          generate_release_notes: true

@@ -1,0 +1,12 @@
+# Binaries
+rpu-publisher
+rpu-publisher.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
